@@ -47,9 +47,13 @@ backend/app/
 
 ## Quick start
 
+**Requires Python 3.11.** The pinned `pydantic==2.10.4` has no wheel for
+Python 3.13+ and fails to build from source, so create the venv with 3.11
+explicitly.
+
 ```bash
 cd backend
-python -m venv .venv && source .venv/Scripts/activate   # Windows Git Bash
+py -3.11 -m venv .venv && source .venv/Scripts/activate   # Windows Git Bash
 pip install -r requirements.txt
 cp .env.example .env        # optional: add ANTHROPIC_API_KEY / GITHUB_TOKEN
 uvicorn app.main:app --reload
