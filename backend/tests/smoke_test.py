@@ -10,6 +10,10 @@ from __future__ import annotations
 import os
 import tempfile
 
+# Blank the keys so a local .env never makes this test call a paid API.
+os.environ["ANTHROPIC_API_KEY"] = ""
+os.environ["GEMINI_API_KEY"] = ""
+
 # Use an isolated temp DB so the test never touches a real one.
 os.environ["DATABASE_URL"] = "sqlite:///" + os.path.join(
     tempfile.gettempdir(), "codereview_smoke.db"

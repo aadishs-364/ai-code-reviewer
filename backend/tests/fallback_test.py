@@ -27,6 +27,12 @@ def make_client(claude_statuses: list, gemini_replies: list) -> tuple[LLMClient,
         claude_calls.append(status)
         if status == "timeout":
             raise httpx.ReadTimeout("slow", request=request)
+        if status == "refusal":
+            return httpx.Response(200, json={
+                "id": "m", "type": "message", "role": "assistant", "model": "claude",
+                "content": [], "stop_reason": "refusal",
+                "usage": {"input_tokens": 1, "output_tokens": 0},
+            })
         if status != 200:
             return httpx.Response(status, headers={"retry-after-ms": "1"}, json={})
         return httpx.Response(200, json={
@@ -86,6 +92,12 @@ def test_bad_json_falls_back():
     llm, c, g = make_client([401], ["not json", json.dumps(OK_REVIEW)])
     review(llm)
     assert g == ["gemini-pro", "gemini-flash"]
+
+
+def test_refusal_falls_back():
+    llm, c, g = make_client(["refusal"], [json.dumps(OK_REVIEW)])
+    assert review(llm)["summary"] == "fine"
+    assert c == ["refusal"] and g == ["gemini-pro"]  # not retried
 
 
 def test_all_fail_raises():

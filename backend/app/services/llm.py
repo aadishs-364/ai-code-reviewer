@@ -52,6 +52,14 @@ _REVIEW_SCHEMA = {
 _RETRY_STATUS = [429, 500, 502, 503, 504, 529]
 
 
+def _claude_text(message) -> str:
+    """Text of a Claude reply. A refusal arrives as HTTP 200, so raise to
+    make the fallback chain move on instead of returning an empty review."""
+    if message.stop_reason == "refusal":
+        raise RuntimeError("Claude declined the request")
+    return "".join(b.text for b in message.content if b.type == "text")
+
+
 class LLMClient:
     """Tries Claude, then each Gemini model in order. Each SDK retries
     retryable errors (429/5xx/network) with backoff; once a model's retries
@@ -155,7 +163,7 @@ class LLMClient:
                     "format": {"type": "json_schema", "schema": _REVIEW_SCHEMA}
                 },
             )
-            return next((b.text for b in response.content if b.type == "text"), "{}")
+            return _claude_text(response)
 
         # Parse inside the chain so a malformed JSON reply also falls back.
         data = self._with_fallback("review", lambda m: json.loads(call(m)))
@@ -176,7 +184,7 @@ class LLMClient:
         def call(model: str) -> str:
             if model.startswith("gemini"):
                 return self._gemini_text(model, prompts.DOC_SYSTEM, user)
-            # Docs can be long — stream and collect to avoid HTTP timeouts.
+            # Docs can be long â€” stream and collect to avoid HTTP timeouts.
             # Nothing reaches the user until the full message arrives, so
             # falling back after a mid-stream failure is safe.
             with self._claude.messages.stream(
@@ -186,7 +194,7 @@ class LLMClient:
                 messages=[{"role": "user", "content": user}],
             ) as stream:
                 message = stream.get_final_message()
-            return "".join(b.text for b in message.content if b.type == "text")
+            return _claude_text(message)
 
         return self._with_fallback("docs", call)
 
