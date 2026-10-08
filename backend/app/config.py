@@ -17,6 +17,18 @@ class Settings(BaseSettings):
     anthropic_model: str = "claude-opus-4-6"
     anthropic_max_tokens: int = 16000
 
+    # Gemini fallback chain, tried in order after Claude fails.
+    gemini_api_key: str | None = None
+    gemini_models: list[str] = [
+        "gemini-3.1-pro-preview",
+        "gemini-3.8-flash",
+        "gemini-3.5-flash",
+    ]
+
+    # Per-attempt timeout and retries (SDK-level, retryable errors only).
+    llm_timeout_seconds: float = 120.0
+    llm_max_retries: int = 2
+
     # GitHub integration
     github_token: str | None = None
     github_api_url: str = "https://api.github.com"
@@ -24,9 +36,9 @@ class Settings(BaseSettings):
 
     @property
     def llm_enabled(self) -> bool:
-        """True when a Claude API key is configured. Otherwise the engine
-        falls back to the local heuristic reviewer."""
-        return bool(self.anthropic_api_key)
+        """True when a Claude or Gemini key is configured. Otherwise the
+        engine falls back to the local heuristic reviewer."""
+        return bool(self.anthropic_api_key or self.gemini_api_key)
 
 
 @lru_cache

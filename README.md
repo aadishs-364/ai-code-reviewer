@@ -47,9 +47,8 @@ backend/app/
 
 ## Quick start
 
-**Requires Python 3.11.** The pinned `pydantic==2.10.4` has no wheel for
-Python 3.13+ and fails to build from source, so create the venv with 3.11
-explicitly.
+**Use Python 3.11**: the pinned versions are tested there, so create the venv
+with 3.11 explicitly.
 
 ```bash
 cd backend
@@ -107,5 +106,8 @@ All optional; see [`backend/.env.example`](backend/.env.example).
 | `DATABASE_URL` | `sqlite:///./codereview.db` | Postgres for prod |
 | `ANTHROPIC_API_KEY` | — | Enables Claude; omit for heuristics-only |
 | `ANTHROPIC_MODEL` | `claude-opus-4-6` | |
+| `GEMINI_API_KEY` | � | Enables the Gemini fallback chain |
+| `GEMINI_MODELS` | `["gemini-3.1-pro-preview","gemini-3.8-flash","gemini-3.5-flash"]` | Tried in order after Claude |
+| `LLM_TIMEOUT_SECONDS` / `LLM_MAX_RETRIES` | `120` / `2` | Per model; retries only 429/5xx/network |
 | `GITHUB_TOKEN` | — | `pull_requests: read/write` |
 | `GITHUB_WEBHOOK_SECRET` | — | Verifies webhook signatures |
